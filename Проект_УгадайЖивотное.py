@@ -1,10 +1,11 @@
+# Узел дерева. Листья хранят имя животного, внутренние узлы хранят вопрос
 class Node:
     def __init__(self, text):
         self.text = text
         self.yes = None
         self.no = None
-        self.asked = 0
-        self.success = 0
+        self.asked = 0    # сколько раз вопрос задавался
+        self.success = 0  # сколько раз после него угадали
 
     def is_animal(self):
         return self.yes is None
@@ -19,6 +20,7 @@ def animal(name):
     return Node(name)
 
 
+# Создает внутренний узел с двумя ветками
 def question(text, yes, no):
     node = Node(text)
     node.yes = yes
@@ -26,6 +28,7 @@ def question(text, yes, no):
     return node
 
 
+# Стек для истории вопросов текущей игры
 class Stack:
     def __init__(self):
         self.items = []
@@ -63,6 +66,7 @@ class DecisionTree:
         )
 
     def descend(self, node, history):
+        # Рекурсивный спуск по дереву. Возвращает лист или "back"
         if node.is_animal():
             return node
         answer = ask(node.text)
@@ -75,20 +79,24 @@ class DecisionTree:
             child = node.no
         result = self.descend(child, history)
         if result == "back":
+            # убираем текущий вопрос из стека и задаем его заново
             history.pop()
             return self.descend(node, history)
         return result
 
+    # Подсчет листьев рекурсивным обходом
     def count_animals(self, node):
         if node.is_animal():
             return 1
         return self.count_animals(node.yes) + self.count_animals(node.no)
 
+    # Собирает все внутренние узлы для сортировки
     def all_questions(self, node):
         if node.is_animal():
             return []
         return [node] + self.all_questions(node.yes) + self.all_questions(node.no)
 
+    # Сортировка выбором по убыванию доли успехов
     def sorted_questions(self):
         questions = self.all_questions(self.root)
         for i in range(len(questions)):
@@ -100,6 +108,7 @@ class DecisionTree:
         return questions
 
     def learn(self, wrong_animal, parent, branch, name, text):
+        # Новый вопрос. Новое животное - да, неверное - нет
         new_question = question(text, animal(name), wrong_animal)
         if branch == "yes":
             parent.yes = new_question
@@ -108,8 +117,10 @@ class DecisionTree:
 
 
 tree = DecisionTree()
-games = []
+games = []  # длины партий для префиксных сумм
 
+
+# Префиксные суммы для подсчета средней глубины партий
 
 def build_prefix(games):
     prefix = [0]
@@ -119,10 +130,12 @@ def build_prefix(games):
 
 
 def average_in_range(prefix, start, end):
+    # Среднее за диапазон партий за O(1)
     total = prefix[end] - prefix[start]
     return total / (end - start)
 
 
+# Читает ответ пользователя, повторяет запрос при неверном вводе
 def ask(text):
     while True:
         answer = input(text + " (да/нет/назад): ").strip().lower()
@@ -139,6 +152,7 @@ def play():
     history = Stack()
     leaf = tree.descend(tree.root, history)
     while leaf == "back":
+        # пользователь вернулся дальше корня, начинаем сначала
         leaf = tree.descend(tree.root, history)
 
     games.append(history.size())
@@ -153,6 +167,7 @@ def play():
     if correct:
         print("Угадал!")
     else:
+        # просим назвать животное и отличающий вопрос для обучения
         parent, branch = history.top()
         name = input("Кого ты загадал? ").strip()
         text = input("Задай вопрос, на который для '" + name + "' ответ да, а для '" + leaf.text + "' нет: ").strip()
