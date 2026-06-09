@@ -32,7 +32,7 @@ class Game:
 
         guess = input("Это " + leaf.text + "? (да/нет): ").strip().lower()
         correct = guess in ("да", "д")
-        for question_node, answer in history:
+        for question_node, answer in history.items:
             question_node.asked += 1
             if correct:
                 question_node.success += 1
