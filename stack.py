@@ -19,7 +19,3 @@ class Stack:
 
     def is_empty(self):
         return len(self.items) == 0
-
-    def __iter__(self):
-        # перебор элементов от дна к вершине
-        return iter(self.items)
